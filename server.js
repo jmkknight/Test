@@ -1,33 +1,37 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const fs = require('fs');
-const path = require('path');
-
 const app = express();
-const PORT = 3000;
+const port = process.env.PORT || 3000;
 
-// Serve static files
-app.use(express.static('public'));
+// Parse URL-encoded bodies (from HTML forms)
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.static('public')); // serve your HTML, CSS, JS
 
-// File to store login data
-const DATA_FILE = `C:\\Users\\jmkkn\\OneDrive\\Documents\\Test\\data\\data.txt`;
+// Temporary in-memory database (will reset on restart)
+let users = [];
 
-// Ensure the file exists
-if (!fs.existsSync(DATA_FILE)) {
-  fs.writeFileSync(DATA_FILE, '', 'utf-8');
-}
+// Serve login page
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/public/login.html');
+});
 
-// Handle login form submission
+// Handle login POST
 app.post('/login', (req, res) => {
-  const { email, password } = req.body;
-  const entry = `Email: ${email}, Password: ${password}\n`;
-  fs.appendFileSync(DATA_FILE, entry, 'utf-8');
-
-  // Redirect back to login page
-  res.redirect('/login.html');
+  const { username, password } = req.body;
+  // Simple example: check if user exists
+  const user = users.find(u => u.username === username && u.password === password);
+  if (user) {
+    res.send('Login successful!');
+  } else {
+    res.send('Invalid credentials');
+  }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
+// Handle signup (if you want)
+app.post('/signup', (req, res) => {
+  const { username, password } = req.body;
+  users.push({ username, password });
+  res.send('User registered!');
 });
+
+app.listen(port, () => console.log(`Server running on http://localhost:${port}`));
